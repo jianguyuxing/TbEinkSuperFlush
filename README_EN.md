@@ -15,7 +15,7 @@ TbEinkSuperFlush is an intelligent ghosting reduction tool specifically designed
 
 ### 🎯 Intelligent Ghosting Reduction
 - **GPU Acceleration**: Utilizes DirectX 11 and compute shaders for high-performance image processing
-- **Tiled Detection**: Divides screen into 8x8 pixel tiles for precise change detection
+- **Tiled Detection**: Divides screen into 10x10 pixel tiles for precise change detection
 - **Smart Refresh Algorithm**: Multi-frame stability detection to avoid over-refreshing
 
 ### 🚫 Smart Area Filtering
@@ -37,7 +37,7 @@ TbEinkSuperFlush is an intelligent ghosting reduction tool specifically designed
 ## Technical Features
 
 ### Advanced Algorithms
-- **Multi-frame Stability Detection**: Based on 4-frame average window and 3-frame stability requirement
+- **Multi-frame Stability Detection**: Based on 5-frame average window and 10-frame stability requirement
 - **Dynamic Protection Period**: Dynamically calculates protection period based on overlay display time
 - **Noise Filtering**: Intelligent identification and filtering of screen noise
 

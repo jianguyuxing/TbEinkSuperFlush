@@ -36,9 +36,9 @@ namespace TbEinkSuperFlush
         // ---------------------------
         
         // --- Refresh parameters ---
-        private const int TILE_SIZE = 16;               // 图块像素边长，平衡灵敏度和噪声
-        private const int PIXEL_DELTA = 25;               // 每个像素的亮度差异阈值
-        private const float PIXEL_DELTA_SCALE = 0.08f;      // 像素差异阈值缩放系数，影响区块差异计算 (0.0 - 1.0)
+        private const int TILE_SIZE = 12;               // 图块像素边长，平衡灵敏度和噪声
+        private const int PIXEL_DELTA = 16;               // 每个像素的亮度差异阈值
+        private const float PIXEL_DELTA_SCALE = 0.5f;      // 像素差异阈值缩放系数，影响区块差异计算 (0.0 - 1.0)
         private const int INITIAL_COOLDOWN = -2;       // 初始化冷却帧数（负值，延缓多少帧）
         private const uint AVERAGE_WINDOW_SIZE = 5;     // 平均窗口帧数，更好检测渐变
         private const int STABLE_FRAMES_REQUIRED = 10;   // 稳定帧数，平衡响应速度和稳定性
@@ -1249,11 +1249,11 @@ namespace TbEinkSuperFlush
                         // 亮度 > 0.5 显示黑色，亮度 <= 0.5 显示白色（反向）
                         if (brightness > 0.5f)
                         {
-                            overlayColor = Color.FromArgb(90, 0, 0, 0); // 半透明黑色
+                            overlayColor = Color.FromArgb(85, 0, 0, 0); // 半透明黑色
                         }
                         else
                         {
-                            overlayColor = Color.FromArgb(90, 255, 255, 255); // 半透明白色
+                            overlayColor = Color.FromArgb(85, 255, 255, 255); // 半透明白色
                         }
                         
                         // 在刷新区域绘制反向亮度颜色的半透明方块
