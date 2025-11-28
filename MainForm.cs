@@ -37,10 +37,10 @@ namespace TbEinkSuperFlush
         
         // --- Refresh parameters ---
         private const int TILE_SIZE = 8;               // 图块像素边长，平衡灵敏度和噪声
-        private const int PIXEL_DELTA = 25;               // 每个像素的亮度差异阈值 
+        private const int PIXEL_DELTA = 15;               // 每个像素的亮度差异阈值
         private const int INITIAL_COOLDOWN = -2;       // 初始化冷却帧数（负值，延缓多少帧）
-        private const uint AVERAGE_WINDOW_SIZE = 5;     // 平均窗口帧数，更好检测渐变
-        private const int STABLE_FRAMES_REQUIRED = 4;   // 稳定帧数，平衡响应速度和稳定性
+        private const uint AVERAGE_WINDOW_SIZE = 4;     // 平均窗口帧数，更好检测渐变
+        private const int STABLE_FRAMES_REQUIRED = 3;   // 稳定帧数，平衡响应速度和稳定性
         private const int ADDITIONAL_COOLDOWN_FRAMES = 2; // 额外冷却帧数，避免过度刷新
         private const int FIRST_REFRESH_EXTRA_DELAY = 2; // 首次刷新额外延迟帧数，用于-1状态区块
     
@@ -57,9 +57,9 @@ namespace TbEinkSuperFlush
         private static int ProtectedFramesAfterOverlay => ProtectionFrames + ADDITIONAL_COOLDOWN_FRAMES; // 总保护期帧数（动态计算）
         
         // --- 重置区间设置 ---
-        // 背景：当检测到变化的区块超过全部区块的95%时，通常代表用户使用了系统自带的EInk驱动进行了全屏刷新
+        // 背景：当检测到变化的区块超过全部区块的95%时，通常代表用户使用了系统自带的Eink驱动进行了全屏刷新
         // 此时我们应该跳过刷新处理，将所有区块重置为与点击开始按钮后相同的状态，避免重复刷新
-        private const double RESET_THRESHOLD_PERCENT = 0.95; // 重置阈值百分比（95%）
+        private const double RESET_THRESHOLD_PERCENT = 95; // 重置阈值百分比（95%）
         private System.Windows.Forms.Timer? _overlayHideTimer; // 单例定时器，避免多个定时器冲突
         private NotifyIcon? _trayIcon;
         private bool _forceDirectXCapture = false; // 是否强制使用DirectX捕获
