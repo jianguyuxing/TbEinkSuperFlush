@@ -662,98 +662,98 @@ namespace TbEinkSuperFlush
             // Handle the first frame to prevent initial full refresh
             if (_isFirstFrame)
             {
-                _context.CopyResource(_gpuTexPrev!, _gpuTexCurr!);
-                _context.Flush();
+                _context?.CopyResource(_gpuTexPrev!, _gpuTexCurr!);
+                _context?.Flush();
                 _isFirstFrame = false;
                 _debugLogger?.Invoke("DEBUG: First frame captured. Initializing previous texture and skipping comparison.");
                 return (result, new float[_tilesX * _tilesY]); // Return empty list with brightness data
             }
 
             // 1. 清空刷新计数器
-            _context!.ClearUnorderedAccessView(_refreshCounterUAV!, new Vortice.Mathematics.Int4(0));
+            _context?.ClearUnorderedAccessView(_refreshCounterUAV!, new Vortice.Mathematics.Int4(0));
 
             // 2. 绑定资源
-            _context.CSSetShader(_computeShader);
+            _context?.CSSetShader(_computeShader);
             // Update constant buffer with new parameters
             uint[] cbData = { (uint)_screenW, (uint)_screenH, (uint)TileSize, (uint)PixelDelta, AverageWindowSize };
-            _context.UpdateSubresource(cbData, _paramBuffer!);
-            _context.CSSetConstantBuffer(0, _paramBuffer);
+            _context?.UpdateSubresource(cbData, _paramBuffer!);
+            _context?.CSSetConstantBuffer(0, _paramBuffer);
             
             using var srvPrev = _device!.CreateShaderResourceView(_gpuTexPrev!);
             using var srvCurr = _device!.CreateShaderResourceView(_gpuTexCurr!);
-            _context.CSSetShaderResource(0, srvPrev);
-            _context.CSSetShaderResource(1, srvCurr);
-            _context.CSSetUnorderedAccessView(0, _tileStateInUAV);
-            _context.CSSetUnorderedAccessView(1, _tileStateOutUAV);
-            _context.CSSetUnorderedAccessView(2, _refreshListUAV);
-            _context.CSSetUnorderedAccessView(3, _refreshCounterUAV);
-            _context.CSSetUnorderedAccessView(4, _tileBrightnessUAV);
+            _context?.CSSetShaderResource(0, srvPrev);
+            _context?.CSSetShaderResource(1, srvCurr);
+            _context?.CSSetUnorderedAccessView(0, _tileStateInUAV);
+            _context?.CSSetUnorderedAccessView(1, _tileStateOutUAV);
+            _context?.CSSetUnorderedAccessView(2, _refreshListUAV);
+            _context?.CSSetUnorderedAccessView(3, _refreshCounterUAV);
+            _context?.CSSetUnorderedAccessView(4, _tileBrightnessUAV);
             
             // 3. 执行计算
             uint groupX = (uint)_tilesX;
             uint groupY = (uint)_tilesY;
-            _context.Dispatch(groupX, groupY, 1);
+            _context?.Dispatch(groupX, groupY, 1);
             
             // 添加GPU同步点，确保计算着色器执行完成
-            _context.Flush();
+            _context?.Flush();
 
             // 4. 解绑资源
-            _context.CSSetShader(null);
-            _context.CSSetUnorderedAccessView(0, null);
-            _context.CSSetUnorderedAccessView(1, null);
-            _context.CSSetUnorderedAccessView(2, null);
-            _context.CSSetUnorderedAccessView(3, null);
-            _context.CSSetUnorderedAccessView(4, null);
+            _context?.CSSetShader(null);
+            _context?.CSSetUnorderedAccessView(0, null);
+            _context?.CSSetUnorderedAccessView(1, null);
+            _context?.CSSetUnorderedAccessView(2, null);
+            _context?.CSSetUnorderedAccessView(3, null);
+            _context?.CSSetUnorderedAccessView(4, null);
 
             // 5. 读回结果
-            _context.CopyResource(_refreshCounterReadback!, _refreshCounter!);
-            var counterMap = _context.Map(_refreshCounterReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
-            int refreshCount = Marshal.ReadInt32(counterMap.DataPointer);
-            _context.Unmap(_refreshCounterReadback!, 0);
+            _context?.CopyResource(_refreshCounterReadback!, _refreshCounter!);
+            var counterMap = _context?.Map(_refreshCounterReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+            int refreshCount = counterMap.HasValue ? Marshal.ReadInt32(counterMap.Value.DataPointer) : 0;
+            _context?.Unmap(_refreshCounterReadback!, 0);
 
             if (refreshCount > 0)
             {
-                _context.CopyResource(_refreshListReadback!, _refreshList!);
-                var listMap = _context.Map(_refreshListReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+                _context?.CopyResource(_refreshListReadback!, _refreshList!);
+                var listMap = _context?.Map(_refreshListReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
                 for (int i = 0; i < refreshCount; i++)
                 {
-                    uint tileIndex = (uint)Marshal.ReadInt32(listMap.DataPointer, i * 4); // Read uint (4 bytes)
+                    uint tileIndex = (uint)Marshal.ReadInt32(listMap.HasValue ? listMap.Value.DataPointer : IntPtr.Zero, i * 4); // Read uint (4 bytes)
                     int bx = (int)(tileIndex % _tilesX);
                     int by = (int)(tileIndex / _tilesX);
                     result.Add((bx, by));
                 }
-                _context.Unmap(_refreshListReadback!, 0);
+                _context?.Unmap(_refreshListReadback!, 0);
             }
 
             // 6. 状态迭代：将当前帧的输出状态复制到下一帧的输入状态
-            _context.CopyResource(_tileStateIn!, _tileStateOut!);
+            _context?.CopyResource(_tileStateIn!, _tileStateOut!);
             
             // 7. 纹理迭代：将当前帧的纹理复制到下一帧的上一帧纹理
-            _context.CopyResource(_gpuTexPrev!, _gpuTexCurr!);
+            _context?.CopyResource(_gpuTexPrev!, _gpuTexCurr!);
             
             // 8. 读回亮度数据
             float[] brightnessData = new float[_tilesX * _tilesY];
-            _context.CopyResource(_tileBrightnessReadback!, _tileBrightness!);
-            var brightnessMap = _context.Map(_tileBrightnessReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+            _context?.CopyResource(_tileBrightnessReadback!, _tileBrightness!);
+            var brightnessMap = _context?.Map(_tileBrightnessReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
             unsafe
             {
-                float* brightnessPtr = (float*)brightnessMap.DataPointer.ToPointer();
+                float* brightnessPtr = (float*)(brightnessMap.HasValue ? brightnessMap.Value.DataPointer : IntPtr.Zero).ToPointer();
                 for (int i = 0; i < _tilesX * _tilesY; i++)
                 {
                     brightnessData[i] = brightnessPtr[i];
                 }
             }
-            _context.Unmap(_tileBrightnessReadback!, 0);
+            _context?.Unmap(_tileBrightnessReadback!, 0);
             
             // 添加最终同步点，确保所有GPU操作完成
-            _context.Flush();
+            _context?.Flush();
             
             // 调试信息：记录图块状态统计
             if (_debugLogger != null && result.Count == 0)
             {
                 // 读取一些图块的状态来了解检测情况
-                _context.CopyResource(_tileStateInReadback!, _tileStateIn!);
-                var stateMap = _context.Map(_tileStateInReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+                _context?.CopyResource(_tileStateInReadback!, _tileStateIn!);
+                var stateMap = _context?.Map(_tileStateInReadback!, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
                 
                 const int historyElementSize = 16; // sizeof(uint4)
 
@@ -761,13 +761,14 @@ namespace TbEinkSuperFlush
                 for (int i = 0; i < Math.Min(10, _tilesX * _tilesY); i++) // 只检查前10个图块
                 {
                     // Read the uint4 for each tile
-                    uint hx = (uint)Marshal.ReadInt32(stateMap.DataPointer, i * historyElementSize + 0 * sizeof(uint));
-                    uint hy = (uint)Marshal.ReadInt32(stateMap.DataPointer, i * historyElementSize + 1 * sizeof(uint));
-                    uint hz = (uint)Marshal.ReadInt32(stateMap.DataPointer, i * historyElementSize + 2 * sizeof(uint));
-                    uint hw = (uint)Marshal.ReadInt32(stateMap.DataPointer, i * historyElementSize + 3 * sizeof(uint));
+                    IntPtr dataPtr = stateMap.HasValue ? stateMap.Value.DataPointer : IntPtr.Zero;
+                    uint hx = (uint)Marshal.ReadInt32(dataPtr, i * historyElementSize + 0 * sizeof(uint));
+                    uint hy = (uint)Marshal.ReadInt32(dataPtr, i * historyElementSize + 1 * sizeof(uint));
+                    uint hz = (uint)Marshal.ReadInt32(dataPtr, i * historyElementSize + 2 * sizeof(uint));
+                    uint hw = (uint)Marshal.ReadInt32(dataPtr, i * historyElementSize + 3 * sizeof(uint));
                     _debugLogger.Invoke($"  Tile {i}: History = ({hx}, {hy}, {hz}, {hw})");
                 }
-                _context.Unmap(_tileStateInReadback!, 0);
+                _context?.Unmap(_tileStateInReadback!, 0);
             }
 
             return (result, brightnessData);
@@ -980,7 +981,14 @@ namespace TbEinkSuperFlush
                 }
                 
                 // 获取当前屏幕分辨率，避免使用过时的缓存值
-                Rectangle currentScreenBounds = Screen.PrimaryScreen.Bounds;
+                var primaryScreen = Screen.PrimaryScreen;
+                if (primaryScreen == null)
+                {
+                    _debugLogger?.Invoke("无法获取主屏幕信息");
+                    return false;
+                }
+                
+                Rectangle currentScreenBounds = primaryScreen.Bounds;
                 
                 _debugLogger?.Invoke($"开始GDI+屏幕捕获，捕获区域: {currentScreenBounds}");
                 _debugLogger?.Invoke($"DPI缩放: {_dpiScaleX:F2}x{_dpiScaleY:F2}");
@@ -1089,7 +1097,7 @@ namespace TbEinkSuperFlush
                         DepthPitch = (uint)(bitmapData.Stride * _screenH)
                     };
                     
-                    _context!.UpdateSubresource(_gpuTexCurr, 0, null, box.DataPointer, box.RowPitch, box.DepthPitch);
+                    _context?.UpdateSubresource(_gpuTexCurr, 0, null, box.DataPointer, box.RowPitch, box.DepthPitch);
                     
                     _debugLogger?.Invoke($"D3D纹理更新成功，RowPitch: {box.RowPitch}");
                     
@@ -1108,9 +1116,16 @@ namespace TbEinkSuperFlush
             }
         }
         
-        private bool TryAlternativeCaptureMethods(IDXGIOutput output)
+        private bool TryAlternativeCaptureMethods(IDXGIOutput? output)
         {
             _debugLogger?.Invoke("尝试替代捕获方法...");
+            
+            // 检查输出是否为空
+            if (output == null)
+            {
+                _debugLogger?.Invoke("输出对象为空，无法尝试替代捕获方法");
+                return false;
+            }
             
             // 方法1: 尝试使用不同的显示模式
             try

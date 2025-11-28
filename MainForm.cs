@@ -32,7 +32,6 @@ namespace TbEinkSuperFlush
         // -----------------------------------------------------------
         
         // --- Refresh state handling ---
-        private int _overlayStayCounter = -1; // 刷新色停留计数器(已弃用，改为Task.Delay实现)
         private Stopwatch _overlayShowStopwatch = new(); // 毫秒计时器，控制显示时间(已弃用，改为Task.Delay实现)
         // 保护期现在通过_tileProtectionExpiry数组实现，不再需要全局计数器
         // 记录"已触发刷新、正等待覆盖层消失"的区块，用于精准屏蔽自我刷新
@@ -663,7 +662,7 @@ namespace TbEinkSuperFlush
                             if (_overlayForm != null && _overlayForm.Visible)
                             {
                                 _overlayForm.HideOverlay();
-                                _overlayStayCounter = -1; // 保留此行以确保状态一致性
+                                //_overlayStayCounter = -1; // 保留此行以确保状态一致性
                             }
                         }
                             
@@ -763,7 +762,7 @@ namespace TbEinkSuperFlush
                 _tileStableCounters = null;
                 
                 // 重置刷新色停留计数器
-                _overlayStayCounter = -1; // 保留此行以确保状态一致性
+                //_overlayStayCounter = -1; // 保留此行以确保状态一致性
 
                 lblInfo.Text = "Status: stopped";
                 btnStart.Enabled = true;
@@ -1135,7 +1134,7 @@ namespace TbEinkSuperFlush
             // 更新显示以清除过期的瓦片
             UpdateVisuals();
             
-            // 只有当还有其他瓦片显示时才记录部分过期日志
+            // 只有当还有其他瓦片时，清理临时过期瓦片列表，为下一轮刷新做准备
             if (_tiles.Count > 0)
             {
                 Logger?.Invoke($"DEBUG: 部分刷新色过期，本次过期瓦片数: {expiredCount}，剩余瓦片数: {_tiles.Count}，过期瓦片数: {_expiredTiles.Count}");
