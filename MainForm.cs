@@ -49,7 +49,7 @@ namespace TbEinkSuperFlush
     // -1: 从未变化过的区块（新区块）
     // 0-5: 正在稳定期检测中的区块
 
-        public const int OVERLAY_DISPLAY_TIME = 56; // 刷新颜色停留毫秒
+        public const int OVERLAY_DISPLAY_TIME = 100; // 刷新颜色停留毫秒
         
         // 保护期现在包含显示时长，动态计算显示时间对应的帧数
 
