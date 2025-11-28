@@ -36,15 +36,15 @@ namespace TbEinkSuperFlush
         // ---------------------------
         
         // --- Refresh parameters ---
-        private const int TILE_SIZE = 12;               // 图块像素边长，平衡灵敏度和噪声
-        private const int PIXEL_DELTA = 16;               // 每个像素的亮度差异阈值
-        private const float PIXEL_DELTA_SCALE = 0.5f;      // 像素差异阈值缩放系数，影响区块差异计算 (0.0 - 1.0)
+        private const int TILE_SIZE = 10;               // 图块像素边长，平衡灵敏度和噪声
+        private const int PIXEL_DELTA = 15;               // 每个像素的亮度差异阈值
+        private const float PIXEL_DELTA_SCALE = 0.7f;      // 像素差异阈值缩放系数，影响区块差异计算 (0.0 - 1.0)
         private const int INITIAL_COOLDOWN = -2;       // 初始化冷却帧数（负值，延缓多少帧）
         private const uint AVERAGE_WINDOW_SIZE = 5;     // 平均窗口帧数，更好检测渐变
         private const int STABLE_FRAMES_REQUIRED = 10;   // 稳定帧数，平衡响应速度和稳定性
-        private const int ADDITIONAL_COOLDOWN_FRAMES = 1; // 额外冷却帧数，避免过度刷新
+        private const int ADDITIONAL_COOLDOWN_FRAMES = 3; // 额外冷却帧数，避免过度刷新
         private const int FIRST_REFRESH_EXTRA_DELAY = 1; // 首次刷新额外延迟帧数，用于-1状态区块
-    
+
     // 计数器状态定义：
     // -2: 已刷新过的区块（需要保护）
     // -1: 从未变化过的区块（新区块）
@@ -780,7 +780,6 @@ namespace TbEinkSuperFlush
                 // ② 先让窗口普通显示，确保能看见
                 _overlayForm.ShowInTaskbar = false;
                 _overlayForm.FormBorderStyle = FormBorderStyle.None;
-                _overlayForm.BackColor = Color.Red;    // 恢复红色
                 _overlayForm.TopMost = true;
                 _overlayForm.Opacity = 1.0;    // 交还给 UpdateLayeredWindow 控制
                 _overlayForm.StartPosition = FormStartPosition.Manual;
@@ -807,9 +806,6 @@ namespace TbEinkSuperFlush
                 Log(msg);      // 确保写进日志文件
                 Log("DEBUG: OverlayForm created and shown");
             }
-            
-            // 强制给覆盖层一个不透明背景，确保肉眼可见
-            _overlayForm.BackColor = Color.FromArgb(255, 255, 0, 0); // 不透明白红
             
             // 正确更新瓦片内容和视觉效果，让OverlayForm自己管理生命周期
             await Task.Run(() => _overlayForm.UpdateContent(tiles, brightnessData), token);
