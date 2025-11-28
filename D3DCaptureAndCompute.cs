@@ -30,6 +30,7 @@ namespace TbEinkSuperFlush
         public int TileSize { get; set; }
         public int PixelDelta { get; set; } // Per-component threshold
         public uint AverageWindowSize { get; set; } // 平均窗口大小（帧数）
+        public float PixelDeltaScale { get; set; } // 像素差异阈值缩放系数
         public int CaretCheckInterval { get; set; } // 文本光标检查间隔（毫秒）
         public int ImeCheckInterval { get; set; } // 输入法窗口检查间隔（毫秒）
         public int MouseExclusionRadiusFactor { get; set; } // 鼠标排除区域半径因子
@@ -118,12 +119,13 @@ namespace TbEinkSuperFlush
             _debugLogger?.Invoke("=== D3DCaptureAndCompute Constructor Started ===");
         }
 
-        public D3DCaptureAndCompute(Action<string>? debugLogger, int tileSize, int pixelDelta, uint averageWindowSize, int caretCheckInterval, int imeCheckInterval, int mouseExclusionRadiusFactor, bool forceDirectXCapture) // Constructor with parameters
+        public D3DCaptureAndCompute(Action<string>? debugLogger, int tileSize, int pixelDelta, uint averageWindowSize, float pixelDeltaScale, int caretCheckInterval, int imeCheckInterval, int mouseExclusionRadiusFactor, bool forceDirectXCapture) // Constructor with parameters
         {
             _debugLogger = debugLogger;
             TileSize = tileSize;
             PixelDelta = pixelDelta;
             AverageWindowSize = averageWindowSize;
+            PixelDeltaScale = pixelDeltaScale; // 使用从MainForm传入的值
             CaretCheckInterval = caretCheckInterval;
             ImeCheckInterval = imeCheckInterval;
             MouseExclusionRadiusFactor = mouseExclusionRadiusFactor;
@@ -675,7 +677,7 @@ namespace TbEinkSuperFlush
             // 2. 绑定资源
             _context?.CSSetShader(_computeShader);
             // Update constant buffer with new parameters
-            uint[] cbData = { (uint)_screenW, (uint)_screenH, (uint)TileSize, (uint)PixelDelta, AverageWindowSize };
+            uint[] cbData = { (uint)_screenW, (uint)_screenH, (uint)TileSize, (uint)PixelDelta, AverageWindowSize, BitConverter.ToUInt32(BitConverter.GetBytes(PixelDeltaScale), 0) };
             _context?.UpdateSubresource(cbData, _paramBuffer!);
             _context?.CSSetConstantBuffer(0, _paramBuffer);
             

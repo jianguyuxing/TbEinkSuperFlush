@@ -8,6 +8,7 @@ cbuffer Params : register(b0)
     uint tileSize;
     uint pixelDeltaThreshold; // Per-component threshold (e.g., 15)
     uint averageWindowSize;   // Total number of frames for average (e.g., 5). Max 5 for uint4.
+    float pixelDeltaScale;    // Scale factor for pixel delta threshold (0.0 - 1.0)
 }
 
 Texture2D<float4> g_texPrev : register(t0);
@@ -39,7 +40,7 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
     // Calculate immediate difference for the current tile (current frame vs previous frame)
     float tileBrightnessSum = 0.0f; // 新增：用于计算瓦片平均亮度
     uint pixelCount = 0; // 新增：记录有效像素数量
-    
+
     for (uint y = 0; y < tileSize; ++y)
     {
         for (uint x = 0; x < tileSize; ++x)
@@ -56,7 +57,7 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
                 currentFrameTileDiffSum += (uint)(abs(prevColor.r - currColor.r) * 255.0f);
                 currentFrameTileDiffSum += (uint)(abs(prevColor.g - currColor.g) * 255.0f);
                 currentFrameTileDiffSum += (uint)(abs(prevColor.b - currColor.b) * 255.0f);
-                
+
                 // 新增：计算当前帧的亮度（使用标准亮度公式）
                 float luminance = 0.299f * currColor.r + 0.587f * currColor.g + 0.114f * currColor.b;
                 tileBrightnessSum += luminance;
@@ -64,7 +65,7 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
             }
         }
     }
-    
+
     // 新增：计算并存储瓦片平均亮度
     if (pixelCount > 0)
     {
@@ -102,12 +103,13 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
 
     // Scale pixelDeltaThreshold for total tile difference
     // pixelDeltaThreshold is per-component. For a tile, it's tileSize*tileSize pixels, each with 3 components.
-    uint tileDiffThreshold = pixelDeltaThreshold * tileSize * tileSize * 3;
+    // Apply the pixelDeltaScale factor to adjust sensitivity
+    uint tileDiffThreshold = (uint)((float)(pixelDeltaThreshold * tileSize * tileSize * 3) * pixelDeltaScale);
 
     bool shouldRefresh = false;
 
-    // 简化检测：直接使用阈值，提高灵敏度
-    if (currentFrameTileDiffSum > tileDiffThreshold)
+    // 使用平均帧差异进行检测，提高稳定性
+    if (averageDiff > tileDiffThreshold)
     {
         shouldRefresh = true;
     }

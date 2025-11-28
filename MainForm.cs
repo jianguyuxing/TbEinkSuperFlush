@@ -36,18 +36,19 @@ namespace TbEinkSuperFlush
         // ---------------------------
         
         // --- Refresh parameters ---
-        private const int TILE_SIZE = 8;               // 图块像素边长，平衡灵敏度和噪声
-        private const int PIXEL_DELTA = 15;               // 每个像素的亮度差异阈值
+        private const int TILE_SIZE = 16;               // 图块像素边长，平衡灵敏度和噪声
+        private const int PIXEL_DELTA = 25;               // 每个像素的亮度差异阈值
+        private const float PIXEL_DELTA_SCALE = 0.08f;      // 像素差异阈值缩放系数，影响区块差异计算 (0.0 - 1.0)
         private const int INITIAL_COOLDOWN = -2;       // 初始化冷却帧数（负值，延缓多少帧）
-        private const uint AVERAGE_WINDOW_SIZE = 4;     // 平均窗口帧数，更好检测渐变
-        private const int STABLE_FRAMES_REQUIRED = 3;   // 稳定帧数，平衡响应速度和稳定性
-        private const int ADDITIONAL_COOLDOWN_FRAMES = 2; // 额外冷却帧数，避免过度刷新
-        private const int FIRST_REFRESH_EXTRA_DELAY = 2; // 首次刷新额外延迟帧数，用于-1状态区块
+        private const uint AVERAGE_WINDOW_SIZE = 5;     // 平均窗口帧数，更好检测渐变
+        private const int STABLE_FRAMES_REQUIRED = 10;   // 稳定帧数，平衡响应速度和稳定性
+        private const int ADDITIONAL_COOLDOWN_FRAMES = 1; // 额外冷却帧数，避免过度刷新
+        private const int FIRST_REFRESH_EXTRA_DELAY = 1; // 首次刷新额外延迟帧数，用于-1状态区块
     
     // 计数器状态定义：
     // -2: 已刷新过的区块（需要保护）
     // -1: 从未变化过的区块（新区块）
-    // 0-5: 正在稳定期检测中的区块
+    // 0-n: 正在稳定期检测中的区块
 
         public const int OVERLAY_DISPLAY_TIME = 100; // 刷新颜色停留毫秒
         
@@ -89,9 +90,9 @@ namespace TbEinkSuperFlush
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-        private const int POLL_TIMER_INTERVAL = 515;    // 检测周期（毫秒）
-        private const int CARET_CHECK_INTERVAL = 400;   // 文本光标检查间隔（毫秒）
-        private const int IME_CHECK_INTERVAL = 400;     // 输入法窗口检查间隔（毫秒）
+        private const int POLL_TIMER_INTERVAL = 500;    // 检测周期（毫秒）
+        private const int CARET_CHECK_INTERVAL = 1000;   // 文本光标检查间隔（毫秒）
+        private const int IME_CHECK_INTERVAL = 1000;     // 输入法窗口检查间隔（毫秒）
         
         // SetWindowPos常量
         private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
@@ -455,7 +456,7 @@ namespace TbEinkSuperFlush
                 try
                 {
                     // Create D3DCaptureAndCompute instance with logger and parameters
-                    _d3d = new D3DCaptureAndCompute(DebugLogger, TILE_SIZE, PIXEL_DELTA, AVERAGE_WINDOW_SIZE, CARET_CHECK_INTERVAL, IME_CHECK_INTERVAL, MOUSE_EXCLUSION_RADIUS_FACTOR, _forceDirectXCapture);
+                    _d3d = new D3DCaptureAndCompute(DebugLogger, TILE_SIZE, PIXEL_DELTA, AVERAGE_WINDOW_SIZE, PIXEL_DELTA_SCALE, CARET_CHECK_INTERVAL, IME_CHECK_INTERVAL, MOUSE_EXCLUSION_RADIUS_FACTOR, _forceDirectXCapture);
 
                     // Initialize the per-tile counter array with -1 to indicate unprocessed tiles
                     _tileStableCounters = new int[_d3d.TilesX * _d3d.TilesY];
@@ -1248,11 +1249,11 @@ namespace TbEinkSuperFlush
                         // 亮度 > 0.5 显示黑色，亮度 <= 0.5 显示白色（反向）
                         if (brightness > 0.5f)
                         {
-                            overlayColor = Color.FromArgb(100, 0, 0, 0); // 半透明黑色
+                            overlayColor = Color.FromArgb(90, 0, 0, 0); // 半透明黑色
                         }
                         else
                         {
-                            overlayColor = Color.FromArgb(100, 255, 255, 255); // 半透明白色
+                            overlayColor = Color.FromArgb(90, 255, 255, 255); // 半透明白色
                         }
                         
                         // 在刷新区域绘制反向亮度颜色的半透明方块
