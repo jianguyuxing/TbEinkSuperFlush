@@ -21,7 +21,6 @@ TbEinkSuperFlush is an intelligent ghosting reduction tool specifically designed
 ### 🚫 Smart Area Filtering
 - **Cursor Area Exclusion**: Automatically excludes areas around mouse and text cursor (3-tile radius)
   - ⚠️ **Limitation**: Only supports standard Windows text cursor APIs. Third-party applications using non-standard cursor APIs may not be detectable
-- **IME Candidate Window Detection**: Intelligently identifies and excludes input method candidate window areas
 - **System UI Recognition**: Automatically recognizes system UI areas like taskbars
 
 ### ⚡ Performance Optimization
