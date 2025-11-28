@@ -31,9 +31,6 @@ namespace TbEinkSuperFlush
         private int _currentFrameNumber = 0;  // 当前帧号计数器
         // -----------------------------------------------------------
         
-        // --- Refresh state handling ---
-        private Stopwatch _overlayShowStopwatch = new(); // 毫秒计时器，控制显示时间(已弃用，改为Task.Delay实现)
-        // 保护期现在通过_tileProtectionExpiry数组实现，不再需要全局计数器
         // 记录"已触发刷新、正等待覆盖层消失"的区块，用于精准屏蔽自我刷新
         private readonly HashSet<int> _pendingTiles = new();
         // ---------------------------
@@ -531,7 +528,7 @@ namespace TbEinkSuperFlush
                             changedTiles = filteredTiles;  // 只保留需要处理的区块
                         }
                         
-                        bool shouldBlock = (/*_overlayStayCounter >= 0 &&*/ _overlayForm != null && _overlayForm.Visible) || inProtection;
+                        bool shouldBlock = (_overlayForm != null && _overlayForm.Visible) || inProtection;
                         Log($"屏蔽检查: inProtection={inProtection}, shouldBlock={shouldBlock}, currentFrame={_currentFrameNumber}, overlayVisible={_overlayForm?.Visible ?? false}");
 
                         // 2. Create a lookup set for efficient checking
@@ -662,41 +659,12 @@ namespace TbEinkSuperFlush
                             if (_overlayForm != null && _overlayForm.Visible)
                             {
                                 _overlayForm.HideOverlay();
-                                //_overlayStayCounter = -1; // 保留此行以确保状态一致性
                             }
                         }
                             
 
 
-                            // 管理刷新色停留计数器 (已移至ShowTemporaryOverlayAsync方法中通过Task.Delay实现)
-                            /*if (tilesToRefreshNow.Count > 0)
-                            {
-                                // 当有瓦片需要刷新时，重置停留计数器并启动计时器
-                                _overlayStayCounter = 0;
-                                _overlayShowStopwatch.Restart();
-                            }
-                            else if (_overlayStayCounter >= 0)
-                            {
-                                // 显示时间控制：基于毫秒计时器
-                                if (_overlayShowStopwatch.ElapsedMilliseconds >= OVERLAY_DISPLAY_TIME)
-                                {
-                                    // 显示时间到达，隐藏覆盖层
-                                    if (_overlayForm != null)
-                                    {
-                                        _overlayForm.HideOverlay();
-                                        Log($"刷新色显示结束，显示时间={_overlayShowStopwatch.ElapsedMilliseconds}ms (预期{OVERLAY_DISPLAY_TIME}ms)");
-                                    }
-                                    _overlayStayCounter = -1; // 进入保护期
-                                    _overlayShowStopwatch.Stop();
-                                    _pendingTiles.Clear();    // 释放集合，让下一轮可重新记录
-                                }
-                                else
-                                {
-                                    // 继续显示刷新色
-                                    _overlayStayCounter++;
-                                    Log($"刷新色显示中，时间: {_overlayShowStopwatch.ElapsedMilliseconds}/{OVERLAY_DISPLAY_TIME}ms");
-                                }
-                            }*/
+
 
                             if (changedTiles.Count > 0 || tilesToRefreshNow.Count > 0)
                                 Log($"Captured frame. Changed tiles: {changedTiles.Count}. Tiles to refresh now: {tilesToRefreshNow.Count} (currentFrame: {_currentFrameNumber}, overlayVisible: {_overlayForm?.Visible ?? false})");
@@ -762,7 +730,7 @@ namespace TbEinkSuperFlush
                 _tileStableCounters = null;
                 
                 // 重置刷新色停留计数器
-                //_overlayStayCounter = -1; // 保留此行以确保状态一致性
+                // 保留此行以确保状态一致性
 
                 lblInfo.Text = "Status: stopped";
                 btnStart.Enabled = true;
@@ -783,12 +751,6 @@ namespace TbEinkSuperFlush
             if (token.IsCancellationRequested || _d3d == null) return;
             
             // 不限制瓦片数量，确保检测所有变化区域
-            // const int MAX_TILES_PER_OVERLAY = 50000;  // 移除限制
-            // if (tiles?.Count > MAX_TILES_PER_OVERLAY)
-            // {
-            //     Log($"警告：瓦片数量过多({tiles.Count})，限制为{MAX_TILES_PER_OVERLAY}个");
-            //     tiles = tiles.Take(MAX_TILES_PER_OVERLAY).ToList();
-            // }
             
             // 确保有瓦片需要显示
             if (tiles == null || tiles.Count == 0)
